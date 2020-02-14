@@ -113,12 +113,19 @@ func (t *Template) Execute(w io.Writer, input []byte, fetch Fetch) (n int, err e
 					t.instructions[len(t.instructions)-1].directive.defined = true
 				}
 				insideItem = false
+				lastPosition = i + 1
 			}
 		}
 	}
 
 	if len(t.instructions) == 0 {
 		return w.Write(t.input)
+	} else {
+		t.instructions = append(t.instructions, instruction{
+			kind:  write,
+			start: lastPosition,
+			end:   length,
+		})
 	}
 
 	return t.executeInstructions(w, t.instructions)

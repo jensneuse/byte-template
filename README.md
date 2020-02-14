@@ -14,13 +14,12 @@ import (
 func main() {
     template := byte_template.New(byte_template.DirectiveDefinition{
         Name:[]byte("toLower"),
-        Resolve:func(w io.Writer, arg []byte) error {
-            _,err := w.Write(bytes.ToLower(arg))
-            return err
+        Resolve:func(w io.Writer, arg []byte) (n int,err error) {
+            return w.Write(bytes.ToLower(arg))
         },
     })
     buf := bytes.Buffer{}
-    _ = template.Execute(&buf,[]byte("/api/user/{{ toLower .name }}"),func(w io.Writer, path []byte) (err error) {
+    _,_ = template.Execute(&buf,[]byte("/api/user/{{ toLower .name }}"),func(w io.Writer, path []byte) (n int,err error) {
         if bytes.Equal(path,[]byte("name")){
             _,err = w.Write([]byte("Jens"))
         }
