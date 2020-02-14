@@ -90,7 +90,7 @@ func (t *Template) Execute(w io.Writer,input []byte,fetch Fetch) error {
 		case t.endToken:
 			if i+1 < length && t.input[i+1] == t.endToken {
 				insideTemplate = false
-				i = i + 1
+				i = i + 2
 				lastPosition = i
 			}
 		}

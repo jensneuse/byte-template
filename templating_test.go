@@ -37,6 +37,15 @@ func TestTemplating(t *testing.T) {
 		}
 		return
 	}))
+	t.Run("multiple variables", run("/api/user/{{ .id }}/{{ .name }}/{{.id}}", "/api/user/1/jens/1", func(w io.Writer, path []byte) (err error) {
+		switch string(path) {
+		case ".id":
+			_, err = w.Write([]byte("1"))
+		case ".name":
+			_, err = w.Write([]byte("jens"))
+		}
+		return
+	}))
 	t.Run("simple id", run("/api/user/{{.id}}", "/api/user/1", func(w io.Writer, path []byte) (err error) {
 		if string(path) == ".id" {
 			_, err = w.Write([]byte("1"))
