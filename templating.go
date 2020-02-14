@@ -32,8 +32,8 @@ var defaultBaseTemplate = baseTemplate{
 
 type Fetch func(w io.Writer, path []byte) (n int, err error)
 
-func New(directiveDefinitions ...DirectiveDefinition) Template {
-	return Template{
+func New(directiveDefinitions ...DirectiveDefinition) *Template {
+	return &Template{
 		baseTemplate: defaultBaseTemplate,
 		directives:   directiveDefinitions,
 	}
