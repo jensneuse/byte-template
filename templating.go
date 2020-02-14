@@ -30,7 +30,7 @@ var defaultBaseTemplate = baseTemplate{
 	endToken:   '}',
 }
 
-type Fetch func(w io.Writer, path []byte) (err error)
+type Fetch func(w io.Writer, path []byte) (n int, err error)
 
 func New(directiveDefinitions ...DirectiveDefinition) Template {
 	return Template{
@@ -60,7 +60,7 @@ type arg struct {
 	end     int
 }
 
-func (t *Template) Execute(w io.Writer,input []byte,fetch Fetch) error {
+func (t *Template) Execute(w io.Writer, input []byte, fetch Fetch) (n int, err error) {
 
 	t.input = input
 	t.instructions = t.instructions[:0]
@@ -118,48 +118,47 @@ func (t *Template) Execute(w io.Writer,input []byte,fetch Fetch) error {
 	}
 
 	if len(t.instructions) == 0 {
-		_, err := w.Write(t.input)
-		return err
+		return w.Write(t.input)
 	}
 
 	return t.executeInstructions(w, t.instructions)
 }
 
-func (t *Template) executeInstructions(w io.Writer, instructions []instruction) error {
+func (t *Template) executeInstructions(w io.Writer, instructions []instruction) (n int, err error) {
 	for i := range instructions {
 		switch instructions[i].kind {
 		case write:
-			_, err := w.Write(t.input[instructions[i].start:instructions[i].end])
+			n, err = w.Write(t.input[instructions[i].start:instructions[i].end])
 			if err != nil {
-				return err
+				return
 			}
 		case template:
 			itemPath := t.input[instructions[i].item.start:instructions[i].item.end]
 			t.buf.Reset()
-			err := t.fetch(&t.buf, itemPath)
+			n, err = t.fetch(&t.buf, itemPath)
 			if err != nil {
-				return err
+				return
 			}
 
 			if instructions[i].directive.defined {
 				directiveName := t.input[instructions[i].directive.start:instructions[i].directive.end]
 				for k := range t.directives {
 					if bytes.Equal(directiveName, t.directives[k].Name) {
-						err = t.directives[k].Resolve(w, t.buf.Bytes())
+						n, err = t.directives[k].Resolve(w, t.buf.Bytes())
 						if err != nil {
-							return err
+							return
 						}
 					}
 				}
 			} else {
 				_, err = t.buf.WriteTo(w)
 				if err != nil {
-					return err
+					return
 				}
 			}
 		}
 	}
-	return nil
+	return
 }
 
 func (t *Template) byteIsWhitespace(r byte) bool {
@@ -173,5 +172,5 @@ func (t *Template) byteIsWhitespace(r byte) bool {
 
 type DirectiveDefinition struct {
 	Name    []byte
-	Resolve func(w io.Writer, arg []byte) error
+	Resolve func(w io.Writer, arg []byte) (n int, err error)
 }
